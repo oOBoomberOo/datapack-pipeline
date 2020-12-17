@@ -1,0 +1,44 @@
+name: 'Datapack Publisher'
+description: 'Packing datapack and upload'
+inputs:
+  directory:
+    description: 'Base directory to packing datapack'
+    required: true
+    default: './'
+  exclude:
+    description: 'Excluded files or directories'
+    default: '.gitignore'
+  name:
+    description: 'Datapack name'
+    required: true
+
+runs:
+  using: "composite"
+  env:
+    VERSION: ${{ github.ref }}
+  steps:
+    - uses: actions/checkout@v2
+
+    - name: Archive Datapack
+      run: zip -x ${{ inputs.exclude }} -r 'datapack.zip' ${{ inputs.directory }}
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.VERSION }}
+        release_name: Release ${{ inputs.name }} - ${{ env.VERSION }}
+        draft: true
+        prerelease: false
+    
+    - name: Upload Datapack
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: './datapack.zip'
+        asset_name: ${{ inputs.name }}.zip
+        asset_content_type: application/zip

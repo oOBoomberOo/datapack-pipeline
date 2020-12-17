@@ -1,44 +1,35 @@
-name: 'Datapack Publisher'
-description: 'Packing datapack and upload'
+name: "Datapack Publisher"
+author: "Boomber <boombercmd123@gmail.com>"
+description: "Packing datapack and upload"
 inputs:
-  directory:
-    description: 'Base directory to packing datapack'
-    required: true
-    default: './'
-  exclude:
-    description: 'Excluded files or directories'
-    default: '.gitignore'
   name:
-    description: 'Datapack name'
+    description: "Datapack name"
+    required: false
+  config:
+    description: "Path to a config file for this action"
     required: true
+  tag_name:
+    description: "Tag name of the release"
+    required: true
+  body:
+    description: "Release Body"
+    required: false
+  release_name:
+    description: "Release Name"
+    required: false
+  commitish:
+    description: "Commitish"
+    required: false
+  draft:
+    description: "Is Draft Release?"
+    required: false
+  prerelease:
+    description: "Is Pre-Release?"
+    required: false
+outputs:
+  upload_url:
+    description: "The url to the github release of this datapack"
 
 runs:
-  using: "composite"
-  env:
-    VERSION: ${{ github.ref }}
-  steps:
-    - uses: actions/checkout@v2
-
-    - name: Archive Datapack
-      run: zip -x ${{ inputs.exclude }} -r 'datapack.zip' ${{ inputs.directory }}
-    
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ env.VERSION }}
-        release_name: Release ${{ inputs.name }} - ${{ env.VERSION }}
-        draft: true
-        prerelease: false
-    
-    - name: Upload Datapack
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: './datapack.zip'
-        asset_name: ${{ inputs.name }}.zip
-        asset_content_type: application/zip
+  using: 'node12'
+  main: 'dist/index.js'

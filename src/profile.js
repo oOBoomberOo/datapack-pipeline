@@ -1,3 +1,4 @@
+const core = require('@actions/core');
 const AdmZip = require('adm-zip');
 const glob = require('glob-promise');
 const minimatch = require('minimatch');
@@ -31,6 +32,9 @@ module.exports.process = async profile => {
 	const excludeMatchers = excludes.map(createMinimatch);
 
 	const matchFiles = x => glob(x, { nonull: false, cwd: profile.base_dir });
+
+	let debug_dir = await fs.readdir('.')
+	core.debug(`content: ${debug_dir}`)
 
 	const matches = includes.map(matchFiles);
 	const files = await Promise.all(matches);

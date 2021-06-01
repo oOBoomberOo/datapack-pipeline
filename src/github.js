@@ -17,7 +17,7 @@ async function createRelease(github, version) {
 	const prerelease = getBool('prerelease');
 	const commitish = getInput('commitish') || context.sha;
 
-	console.log(
+	core.info(
 `Creating a release on ${owner}/${repo}
   1. tag_name = ${version}
   2. name = ${release}

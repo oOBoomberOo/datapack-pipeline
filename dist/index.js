@@ -13740,6 +13740,7 @@ function wrappy (fn, cb) {
 const { promises: fs } = __webpack_require__(5747);
 const toml = __webpack_require__(2901);
 const path = __webpack_require__(5622);
+const core = __webpack_require__(2186)
 
 const getProfile = (workspace, data) => {
 	const verify = (x) => {
@@ -13756,22 +13757,31 @@ const getProfile = (workspace, data) => {
 	let includes = verify(data.includes);
 	let excludes = verify(data.excludes);
 
+	core.debug(`base_dir: ${base_dir}`)
+	core.debug(`includes: ${includes}`)
+	core.debug(`excludes: ${excludes}`)
+
 	return { includes, excludes, base_dir: path.join(workspace, base_dir) };
 }
 
 const getConfig = workspace => async configPath => {
 	const p = path.join(workspace, configPath);
+
+	core.debug(`config path: ${p}`)
+
 	try {
-		console.log(`Reading config file at ${p}`);
+		core.info(`Reading config file at ${p}`);
 		const result = await fs.readFile(p);
 		var content = result.toString();
 	} catch (err) {
-		console.log(err);
 		throw new Error(`Unable to read the config file at ${configPath}: ${err.message}`);
 	}
 
 	try {
 		let configRaw = toml.parse(content);
+
+		let debug_config = JSON.stringify(configRaw)
+		core.debug(`raw config: ${debug_config}`)
 
 		let result = [];
 		for (const kind in configRaw) {
@@ -13811,7 +13821,7 @@ async function createRelease(github, version) {
 	const prerelease = getBool('prerelease');
 	const commitish = getInput('commitish') || context.sha;
 
-	console.log(
+	core.info(
 `Creating a release on ${owner}/${repo}
   1. tag_name = ${version}
   2. name = ${release}
@@ -13903,23 +13913,25 @@ async function main() {
 	const githubSession = getOctokit(process.env.GITHUB_TOKEN);
 
 	const name = github.getName(githubSession);
-	console.log(`Get name: ${name}`);
+	core.info(`Get name: ${name}`);
 	const version = github.getVersion();
-	console.log(`Get version: ${version}`);
+	core.info(`Get version: ${version}`);
 
-	const { uploadUrl } = await github.createRelease(githubSession, version);
+	// const { uploadUrl } = await github.createRelease(githubSession, version);
 
 	for await (const processed of config.map(profile.process)) {
+		core.debug(`Files: ${processed.files}`)
+
 		const archived = await profile.archive(processed);
 		const displayName = profile.displayName(name, archived.kind, version);
 
 		const data = archived.zip.toBuffer();
 
-		await github.uploadAsset(githubSession, uploadUrl, displayName, data, 'application/zip');
-		console.log(`Uploaded asset: ${displayName}`);
+		// await github.uploadAsset(githubSession, uploadUrl, displayName, data, 'application/zip');
+		// core.info(`Uploaded asset: ${displayName}`);
 	}
 
-	core.setOutput('upload_url', uploadUrl);
+	// core.setOutput('upload_url', uploadUrl);
 }
 
 main()
@@ -13931,6 +13943,7 @@ main()
 /***/ 8660:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
+const core = __webpack_require__(2186);
 const AdmZip = __webpack_require__(6761);
 const glob = __webpack_require__(8252);
 const minimatch = __webpack_require__(3973);
@@ -13964,6 +13977,9 @@ module.exports.process = async profile => {
 	const excludeMatchers = excludes.map(createMinimatch);
 
 	const matchFiles = x => glob(x, { nonull: false, cwd: profile.base_dir });
+
+	let debug_dir = await fs.readdir('.')
+	core.debug(`content: ${debug_dir}`)
 
 	const matches = includes.map(matchFiles);
 	const files = await Promise.all(matches);

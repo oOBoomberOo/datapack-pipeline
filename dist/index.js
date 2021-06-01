@@ -13917,21 +13917,19 @@ async function main() {
 	const version = github.getVersion();
 	core.info(`Get version: ${version}`);
 
-	// const { uploadUrl } = await github.createRelease(githubSession, version);
+	const { uploadUrl } = await github.createRelease(githubSession, version);
 
 	for await (const processed of config.map(profile.process)) {
-		core.debug(`Files: ${processed.files}`)
-
 		const archived = await profile.archive(processed);
 		const displayName = profile.displayName(name, archived.kind, version);
 
 		const data = archived.zip.toBuffer();
 
-		// await github.uploadAsset(githubSession, uploadUrl, displayName, data, 'application/zip');
-		// core.info(`Uploaded asset: ${displayName}`);
+		await github.uploadAsset(githubSession, uploadUrl, displayName, data, 'application/zip');
+		core.info(`Uploaded asset: ${displayName}`);
 	}
 
-	// core.setOutput('upload_url', uploadUrl);
+	core.setOutput('upload_url', uploadUrl);
 }
 
 main()
@@ -13965,6 +13963,10 @@ module.exports.archive = async profile => {
 		if (stat.isFile()) {
 			zip.addLocalFile(absolutePath, parent);
 		}
+
+		if (stat.isDirectory()) {
+			zip.addLocalFolder(absolutePath, parent);
+		}
 	}
 
 	return { zip, kind: profile.kind };
@@ -13977,9 +13979,6 @@ module.exports.process = async profile => {
 	const excludeMatchers = excludes.map(createMinimatch);
 
 	const matchFiles = x => glob(x, { nonull: false, cwd: profile.base_dir });
-
-	let debug_dir = await fs.readdir('.')
-	core.debug(`content: ${debug_dir}`)
 
 	const matches = includes.map(matchFiles);
 	const files = await Promise.all(matches);

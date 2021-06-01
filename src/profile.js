@@ -20,6 +20,10 @@ module.exports.archive = async profile => {
 		if (stat.isFile()) {
 			zip.addLocalFile(absolutePath, parent);
 		}
+
+		if (stat.isDirectory()) {
+			zip.addLocalFolder(absolutePath, parent);
+		}
 	}
 
 	return { zip, kind: profile.kind };
@@ -32,9 +36,6 @@ module.exports.process = async profile => {
 	const excludeMatchers = excludes.map(createMinimatch);
 
 	const matchFiles = x => glob(x, { nonull: false, cwd: profile.base_dir });
-
-	let debug_dir = await fs.readdir('.')
-	core.debug(`content: ${debug_dir}`)
 
 	const matches = includes.map(matchFiles);
 	const files = await Promise.all(matches);

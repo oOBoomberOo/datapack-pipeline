@@ -24,21 +24,19 @@ async function main() {
 	const version = github.getVersion();
 	core.info(`Get version: ${version}`);
 
-	// const { uploadUrl } = await github.createRelease(githubSession, version);
+	const { uploadUrl } = await github.createRelease(githubSession, version);
 
 	for await (const processed of config.map(profile.process)) {
-		core.debug(`Files: ${processed.files}`)
-
 		const archived = await profile.archive(processed);
 		const displayName = profile.displayName(name, archived.kind, version);
 
 		const data = archived.zip.toBuffer();
 
-		// await github.uploadAsset(githubSession, uploadUrl, displayName, data, 'application/zip');
-		// core.info(`Uploaded asset: ${displayName}`);
+		await github.uploadAsset(githubSession, uploadUrl, displayName, data, 'application/zip');
+		core.info(`Uploaded asset: ${displayName}`);
 	}
 
-	// core.setOutput('upload_url', uploadUrl);
+	core.setOutput('upload_url', uploadUrl);
 }
 
 main()

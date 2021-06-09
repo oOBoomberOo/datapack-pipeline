@@ -13965,7 +13965,7 @@ module.exports.archive = async profile => {
 		}
 
 		if (stat.isDirectory()) {
-			zip.addLocalFolder(absolutePath, parent);
+			zip.addLocalFolder(absolutePath, absolutePath);
 		}
 	}
 

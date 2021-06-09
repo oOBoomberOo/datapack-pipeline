@@ -22,7 +22,7 @@ module.exports.archive = async profile => {
 		}
 
 		if (stat.isDirectory()) {
-			zip.addLocalFolder(absolutePath, absolutePath);
+			zip.addLocalFolder(absolutePath, relativeFile);
 		}
 	}
 
